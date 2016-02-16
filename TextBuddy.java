@@ -91,53 +91,30 @@ class TextBuddy {
 	
 	private static void runTextBuddy() throws IOException {
 		promptToUser(MESSAGE_FILE_READY, fileName);
-
-		LinkedList<String> tempContents = new LinkedList<String>();
-		
-		BufferedReader fileReader = createReader(fileName);
-		BufferedWriter tempFileWriter = createWriter(NAME_TEMP_FILE);
-		copyFileContentToTempContents(fileReader, tempContents);
-
 		while (isRunning) {
 			promptToUser(MESSAGE_COMMAND_PROMPT);
-
 			String[] input = getInputs(inputScanner);
 			String command = getCommandString(input);
 
 			switch (command) {
 				case "add":
-					addCommand(tempContents, input);
-					
-					saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
-					fileReader = createReader(fileName);
-					tempFileWriter = createWriter(NAME_TEMP_FILE);
-					copyFileContentToTempContents(fileReader, tempContents);
+					addCommand(input);					
 					break;
 	
 				case "display":
-					displayCommand(tempContents);
+					displayCommand();
 					break;
 	
 				case "delete":
-					deleteCommand(tempContents, input);
-					
-					saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
-					fileReader = createReader(fileName);
-					tempFileWriter = createWriter(NAME_TEMP_FILE);
-					copyFileContentToTempContents(fileReader, tempContents);
+					deleteCommand(input);
 					break;
 	
 				case "exit":
-					setRunning();
-					saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
+					exitCommand();
 					break;
 	
 				case "clear":
-					clearCommand(tempContents);
-					
-					saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
-					fileReader = createReader(fileName);
-					tempFileWriter = createWriter(NAME_TEMP_FILE);
+					clearCommand();
 					break;
 	
 				case "help":
@@ -145,15 +122,11 @@ class TextBuddy {
 					break;
 				
 				case "sort":
-					sortCommand(tempContents);
-					saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
-					fileReader = createReader(fileName);
-					tempFileWriter = createWriter(NAME_TEMP_FILE);
-					copyFileContentToTempContents(fileReader, tempContents);
+					sortCommand();
 					break;
 				
 				case "search":
-					searchCommand(tempContents, input);
+					searchCommand(input);
 					break;
 					
 				default:
@@ -239,30 +212,63 @@ class TextBuddy {
 		return input[0];
 	}
 
-	private static void addCommand(LinkedList<String> tempContents, String[] input) {
-		String textToBeAdded = getUserResponse(input);
-		tempContents.add(textToBeAdded);
-		promptToUser(MESSAGE_STRING_SUCCESSFULLY_ADDED, fileName, textToBeAdded);
+	private static void addCommand(String[] input) {
+		try {
+			BufferedReader fileReader = createReader(fileName);
+			BufferedWriter tempFileWriter = createWriter(NAME_TEMP_FILE);
+			LinkedList<String> tempContents = new LinkedList<String>();
+			copyFileContentToTempContents(fileReader, tempContents);
+			
+			String textToBeAdded = getUserResponse(input);
+			tempContents.add(textToBeAdded);
+			promptToUser(MESSAGE_STRING_SUCCESSFULLY_ADDED, fileName, textToBeAdded);
+			
+			saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	private static void displayCommand(LinkedList<String> tempContents) {
-		if (getTotalNumberOfLines(tempContents) == 0) {
-			promptToUser(MESSAGE_TEXT_DOCUMENT_IS_EMPTY, fileName);
-			return;
-		}
-		int counter = 1;
-		for (String lineContent : tempContents) {
-			promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
-			counter++;
+	private static void displayCommand() {
+		try {
+			BufferedReader fileReader = createReader(fileName);
+			LinkedList<String> tempContents = new LinkedList<String>();
+			copyFileContentToTempContents(fileReader, tempContents);
+			
+			if (getTotalNumberOfLines(tempContents) == 0) {
+				promptToUser(MESSAGE_TEXT_DOCUMENT_IS_EMPTY, fileName);
+				return;
+			}
+			int counter = 1;
+			for (String lineContent : tempContents) {
+				promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
+				counter++;
+			}
+			fileReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
-	private static void deleteCommand(LinkedList<String> tempContents, String[] input) {
-		int totalNumberOfLines = getTotalNumberOfLines(tempContents);
-		if (totalNumberOfLines == 0) {
-			promptToUser(MESSAGE_FILE_IS_EMPTY, fileName);
-		} else {
-			try {
+	private static void deleteCommand(String[] input) {
+		try {
+			BufferedReader fileReader = createReader(fileName);
+			BufferedWriter tempFileWriter = createWriter(NAME_TEMP_FILE);
+			LinkedList<String> tempContents = new LinkedList<String>();
+			copyFileContentToTempContents(fileReader, tempContents);
+			
+			int totalNumberOfLines = getTotalNumberOfLines(tempContents);
+			if (totalNumberOfLines == 0) {
+				promptToUser(MESSAGE_FILE_IS_EMPTY, fileName);
+			} else {
 				int lineNumberToBeDeleted = getLineNumberToDelete(input);
 				if (totalNumberOfLines < lineNumberToBeDeleted) {
 					promptToUser(ERROR_LINE_NUMBER_DOES_NOT_EXIST, String.valueOf(lineNumberToBeDeleted));
@@ -271,16 +277,38 @@ class TextBuddy {
 				int tempContentsIndexToRemove = lineNumberToBeDeleted-1;
 				String removedLine = getLineRemoved(tempContents, tempContentsIndexToRemove);
 				promptToUser(removedLine);
-			} catch (NumberFormatException e) {
-				promptToUser(ERROR_DELETE_FORMAT_INCORRECT);
 			}
+			saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NumberFormatException e) {
+			promptToUser(ERROR_DELETE_FORMAT_INCORRECT);
 		}
 	}
 	
-	public static void sortCommand(LinkedList<String> tempContents){
-		lineCompare lineComparator = new lineCompare();
-		Collections.sort(tempContents, lineComparator);
-		promptToUser(MESSAGE_LIST_SORTED, fileName);
+	public static void sortCommand(){
+		try {
+			BufferedReader fileReader = createReader(fileName);
+			BufferedWriter tempFileWriter = createWriter(NAME_TEMP_FILE);
+			LinkedList<String> tempContents = new LinkedList<String>();
+			copyFileContentToTempContents(fileReader, tempContents);
+			
+			lineCompare lineComparator = new lineCompare();
+			Collections.sort(tempContents, lineComparator);
+			promptToUser(MESSAGE_LIST_SORTED, fileName);
+			
+			saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static boolean isContainSubstring(String sourceString, String substring) {
@@ -308,28 +336,50 @@ class TextBuddy {
 	    return false;
 	}
 	
-	public static void searchCommand(LinkedList<String> tempContents, String[] input){
-		ArrayList<Integer> indexOfWordInstanceFound = new ArrayList<Integer>();
-		String wordToSearchFor = getUserResponse(input);
-		
+	public static void searchCommand(String[] input){
+		try {
+			BufferedReader fileReader = createReader(fileName);
+			LinkedList<String> tempContents = new LinkedList<String>();
+			copyFileContentToTempContents(fileReader, tempContents);
+				
+			String wordToSearchFor = getUserResponse(input);
+			ArrayList<Integer> indexesOfWordInstanceFound = getSearchedWordLineIndexes(tempContents, wordToSearchFor);
+				
+			if(indexesOfWordInstanceFound.isEmpty()){
+					promptToUser(ERROR_SEARCHED_WORD_IS_NOT_FOUND, wordToSearchFor);
+			} else {
+				promptToUser(MESSAGE_RETRIEVED_SEARCHED_WORD_INDEX, wordToSearchFor);
+				printSearchResults(tempContents, indexesOfWordInstanceFound);
+			}
+			fileReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static ArrayList<Integer> getSearchedWordLineIndexes(LinkedList<String> tempContents, String wordToSearchFor){
+		ArrayList<Integer> indexesOfWordInstanceFound = new ArrayList<Integer>();
 		int listSize = getTotalNumberOfLines(tempContents);
 		
 		for(int i = 0; i < listSize; i++){
 			String lineString = tempContents.get(i);
 			if(isContainSubstring(lineString, wordToSearchFor)){
-				indexOfWordInstanceFound.add(i);
+				indexesOfWordInstanceFound.add(i);
 			}
 		}
-		if(indexOfWordInstanceFound.isEmpty()){
-			promptToUser(ERROR_SEARCHED_WORD_IS_NOT_FOUND, wordToSearchFor);
-		} else {
-			promptToUser(MESSAGE_RETRIEVED_SEARCHED_WORD_INDEX, wordToSearchFor);
-			for(int j : indexOfWordInstanceFound){
-				int counter = 1+j;
-				String lineContent = tempContents.get(j);
-				promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
-			}
-		}	
+		return indexesOfWordInstanceFound;
+	}
+	
+	public static void printSearchResults(LinkedList<String> tempContents, ArrayList<Integer> indexesOfWordInstanceFound){
+		for(int index : indexesOfWordInstanceFound){
+			int counter = 1+index;
+			String lineContent = tempContents.get(index);
+			promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
+		}
 	}
 	
 	public static int getStringLength(String string) {
@@ -352,37 +402,31 @@ class TextBuddy {
 		return input[1];
 	}
 
-	private static void setRunning() {
+	private static void exitCommand() {
 		isRunning = !isRunning;
 	}
 
 	private static void saveAndWriteToFile(LinkedList<String> tempContents, BufferedWriter tempFileWriter, 
 			BufferedReader fileReader) throws IOException {
-		writeToFile(tempContents, tempFileWriter);
-		replaceOldOriginalFile(tempFileWriter, fileReader);
+		saveChangeAndCloseStreams(tempContents, tempFileWriter, fileReader);
+		replaceOldOriginalFile();
 	}
 
-	private static void writeToFile(LinkedList<String> tempContents, BufferedWriter tempFileWriter) {
+	private static void saveChangeAndCloseStreams(LinkedList<String> tempContents, BufferedWriter tempFileWriter, BufferedReader fileReader) {
 		try {
 			while (!tempContents.isEmpty()) {
 				tempFileWriter.write(tempContents.remove());
 				tempFileWriter.newLine();
 			}
-			tempFileWriter.flush();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	private static void replaceOldOriginalFile(BufferedWriter tempFileWriter, BufferedReader fileReader) {
-		try {
 			tempFileWriter.close();
 			fileReader.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private static void replaceOldOriginalFile(){
 		File file = createFile(fileName);
 		File tempFile = createFile(NAME_TEMP_FILE);
 
@@ -395,8 +439,8 @@ class TextBuddy {
 		}
 	}
 
-	private static void clearCommand(LinkedList<String> tempContents) {
-		tempContents.clear();
+	private static void clearCommand() {
+		replaceOldOriginalFile();
 		promptToUser(MESSAGE_CLEAR_TEXT_MESSAGE, fileName);
 	}
 }
