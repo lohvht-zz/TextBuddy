@@ -47,6 +47,7 @@ class lineCompare implements Comparator<String>{
 		return firstWord.compareTo(secondWord);
 	}
 }
+
 class TextBuddy {
 	private static final String NAME_TEMP_FILE = "editedTemp.txt";
 	//MESSAGES
@@ -311,31 +312,6 @@ class TextBuddy {
 		}
 	}
 	
-	public static boolean isContainSubstring(String sourceString, String substring) {
-	    int substringLength = getStringLength(substring);
-	    
-	    if (substringLength == 0){
-	        return true;
-	    }
-	        
-	    char subStringFirstLowerCaseChar = Character.toLowerCase(substring.charAt(0));
-	    char subStringFirstUpperCaseChar = Character.toUpperCase(substring.charAt(0));
-
-	    for (int i = getStringLength(sourceString) - substringLength; i >= 0; i--) {
-	        char sourceCharacterAt = sourceString.charAt(i);
-	        
-	        if (sourceCharacterAt != subStringFirstLowerCaseChar && sourceCharacterAt != subStringFirstUpperCaseChar){
-	            continue;
-	        }
-	        
-	        if (sourceString.regionMatches(true, i, substring, 0, substringLength)){
-	            return true;
-	        }
-	    }
-
-	    return false;
-	}
-	
 	public static void searchCommand(String[] input){
 		try {
 			BufferedReader fileReader = createReader(fileName);
@@ -359,6 +335,31 @@ class TextBuddy {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public static boolean isContainSubstring(String sourceString, String substring) {
+	    int substringLength = getStringLength(substring);
+	    
+	    if (substringLength == 0){
+	        return true;
+	    }
+	        
+	    char subStringFirstLowerCaseChar = Character.toLowerCase(substring.charAt(0));
+	    char subStringFirstUpperCaseChar = Character.toUpperCase(substring.charAt(0));
+
+	    for (int i = getStringLength(sourceString) - substringLength; i >= 0; i--) {
+	        char sourceCharacterAt = sourceString.charAt(i);
+	        
+	        if (sourceCharacterAt != subStringFirstLowerCaseChar && sourceCharacterAt != subStringFirstUpperCaseChar){
+	            continue;
+	        }
+	        
+	        if (sourceString.regionMatches(true, i, substring, 0, substringLength)){
+	            return true;
+	        }
+	    }
+
+	    return false;
 	}
 	
 	public static ArrayList<Integer> getSearchedWordLineIndexes(LinkedList<String> tempContents, String wordToSearchFor){
