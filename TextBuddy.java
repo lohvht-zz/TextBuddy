@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.io.BufferedReader;
@@ -33,6 +35,17 @@ import java.io.BufferedWriter;
  *			 	c:>
  *6)	if the input filename is not proper (no extension), TextBuddy will automatically format it into a text file (.txt)
  */
+
+/*This class compares the 1st word of each line such that it sorts it by alphabetically order by the first word and not the
+ * lexicographical order of the while string
+ */
+class lineCompare implements Comparator<String>{
+	public int compare(String firstString, String secondString){
+		String firstWord = firstString.split(" ")[0];
+		String secondWord = secondString.split(" ")[0];
+		return firstWord.compareTo(secondWord);
+	}
+}
 class TextBuddy {
 	private static final String NAME_TEMP_FILE = "editedTemp.txt";
 	private static final String MESSAGE_COMMAND_PROMPT = "Command: ";
@@ -41,10 +54,12 @@ class TextBuddy {
 			+ "display        --shows the contents of the text file with all changes made to it before it was saved, "
 			+ "this DOES NOT save the document\n" + "save        --saves all changes made to the text document\n"
 			+ "exit        --saves the document first before exiting Text Buddy\n"
-			+ "clear        --wipes and removes all the data currently stored in the text file, THIS ACTION IS NOT REVERSIBLE\n";
+			+ "clear		--wipes and removes all the data currently stored in the text file, THIS ACTION IS NOT REVERSIBLE\n"
+			+ "search		--sorts the current list line by line in lexicographical order," ;
 	private static final String MESSAGE_FILE_READY = "Welcome to Text Buddy, %1$s is ready for use!\n";
 	private static final String MESSAGE_CLEAR_TEXT_MESSAGE = "all contents deleted from %1$s\n";
 	private static final String MESSAGE_FILE_IS_EMPTY = "%1$s is empty";
+	private static final String MESSAGE_LIST_SORTED = "%1$s is sorted, type display to show the updated list";
 	private static final String ERROR_FILE_REPLACEMENT = "Something has gone wrong with file replacement";
 	private static final String ERROR_NO_FILE_STRING_DETECTED = "No file input stated, terminating program";
 	private static final String ERROR_DELETE_FORMAT_INCORRECT = "Wrong format for delete, parameter should be a number";
@@ -53,10 +68,11 @@ class TextBuddy {
 			+ "arrow brackets to get help on commands\n";
 	private static final String ERROR_LINE_NUMBER_DOES_NOT_EXIST = "line number %1$s does not exist";
 	
+	
 	private static boolean isRunning = true;
 	private static Scanner inputScanner = new Scanner(System.in);
 	private static String fileName = null;
-
+	
 	public static void main(String args[]) throws IOException {
 		if (!isCommandLineValid(args)) {
 			promptToUser(ERROR_NO_FILE_STRING_DETECTED);
@@ -118,6 +134,14 @@ class TextBuddy {
 			case "help":
 				promptToUser(MESSAGE_HELP_SHEET);
 				break;
+			
+			case "sort":
+				sortAlphabetically(tempContents);
+				saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
+				fileReader = createReader(fileName);
+				tempFileWriter = createWriter(NAME_TEMP_FILE);
+				copyFileContentToTempContents(fileReader, tempContents);
+				break;
 
 			default:
 				promptToUser(ERROR_COMMAND_INVALID, command);
@@ -138,7 +162,7 @@ class TextBuddy {
 		}
 		return text;
 	}
-
+	
 	public static void promptToUser(String message) {
 		System.out.println(message);
 	}
@@ -231,7 +255,13 @@ class TextBuddy {
 			}
 		}
 	}
-
+	
+	public static void sortAlphabetically(LinkedList<String> tempContents){
+		lineCompare lineComparator = new lineCompare();
+		Collections.sort(tempContents, lineComparator);
+		promptToUser(MESSAGE_LIST_SORTED, fileName);
+	}
+	
 	public static String getLineRemoved(LinkedList<String> tempContents, int tempContentsIndexToRemove) {
 		return "deleted from " + fileName + ": " + String.valueOf(tempContents.remove(tempContentsIndexToRemove));
 	}
