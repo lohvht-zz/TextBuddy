@@ -34,7 +34,9 @@ import java.io.BufferedWriter;
  *			 	c:>type mytextfile.txt 
  *			 	jump over the moon 
  *			 	c:>
- *6)	if the input filename is not proper (no extension), TextBuddy will automatically format it into a text file (.txt)
+ * 6)	if the input filename is not proper (no extension), TextBuddy will automatically format it into a text file (.txt)
+ * 7) 	Sort function will sort every line based on the alphabetical order of the 1st word of each line, rather than the
+ * 		general lexicographical order of the entire line.
  */
 
 /*This class compares the 1st word of each line such that it sorts it by alphabetically order by the first word and not the
@@ -67,6 +69,7 @@ class TextBuddy {
 	private static final String MESSAGE_LINE_PRINTED = "%1$d. %2$s\n";
 	private static final String MESSAGE_STRING_SUCCESSFULLY_ADDED = "added to %1$s: \"%2$s\"\n";
 	private static final String MESSAGE_TEXT_DOCUMENT_IS_EMPTY = "%1$s is empty\n";
+	private static final String MESSAGE_LINE_DELETED_FROM_FILE = "deleted from %1$s: %2$s\n";
 	//ERROR MESSAGES
 	private static final String ERROR_FILE_REPLACEMENT = "Something has gone wrong with file replacement";
 	private static final String ERROR_NO_FILE_STRING_DETECTED = "No file input stated, terminating program";
@@ -150,22 +153,6 @@ class TextBuddy {
 		return text;
 	}
 	
-	public static void promptToUser(String message) {
-		System.out.println(message);
-	}
-	
-	public static void promptToUser(String message, String name){
-		System.out.printf(message, name);
-	}
-	
-	public static void promptToUser(String message, int number, String name){
-		System.out.printf(message, number, name);
-	}
-	
-	public static void promptToUser(String message, String name1, String name2){
-		System.out.printf(message, name1, name2);
-	}
-	
 	private static File createFile(String fileName) {
 		File file = new File(fileName);
 		try {
@@ -193,15 +180,11 @@ class TextBuddy {
 		return writer;
 	}
 
-	private static void copyFileContentToTempContents(BufferedReader fileReader, LinkedList<String> tempContents) {
+	private static void copyFileContentToTempContents(BufferedReader fileReader, LinkedList<String> tempContents) 
+			throws IOException {
 		String fileLineContent;
-		try {
-			while ((fileLineContent = fileReader.readLine()) != null) {
-				tempContents.add(fileLineContent);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		while ((fileLineContent = fileReader.readLine()) != null) {
+			tempContents.add(fileLineContent);
 		}
 	}
 
@@ -266,19 +249,11 @@ class TextBuddy {
 			LinkedList<String> tempContents = new LinkedList<String>();
 			copyFileContentToTempContents(fileReader, tempContents);
 			
-			int totalNumberOfLines = getTotalNumberOfLines(tempContents);
-			if (totalNumberOfLines == 0) {
-				promptToUser(MESSAGE_FILE_IS_EMPTY, fileName);
-			} else {
-				int lineNumberToBeDeleted = getLineNumberToDelete(input);
-				if (totalNumberOfLines < lineNumberToBeDeleted) {
-					promptToUser(ERROR_LINE_NUMBER_DOES_NOT_EXIST, String.valueOf(lineNumberToBeDeleted));
-					return; 
-				}
-				int tempContentsIndexToRemove = lineNumberToBeDeleted-1;
-				String removedLine = getLineRemoved(tempContents, tempContentsIndexToRemove);
-				promptToUser(removedLine);
+			if(!isDeleteValid(tempContents, input)){
+				return;
 			}
+			
+			deleteLineAndPrint(tempContents, input);
 			saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -289,6 +264,25 @@ class TextBuddy {
 		} catch (NumberFormatException e) {
 			promptToUser(ERROR_DELETE_FORMAT_INCORRECT);
 		}
+	}
+
+	public static int getIndexToRemove(String[] input) {
+		return Integer.valueOf(getUserResponse(input)) - 1;
+	}
+	
+	public static boolean isDeleteValid(LinkedList<String> tempContents, String[] input){
+		int totalNumberOfLines = getTotalNumberOfLines(tempContents);
+		int lineNumberToBeDeleted = getLineNumberToDelete(input);
+		if (totalNumberOfLines == 0) {
+			promptToUser(MESSAGE_FILE_IS_EMPTY, fileName);
+			return false;
+		} else {
+			if (totalNumberOfLines < lineNumberToBeDeleted) {
+				promptToUser(ERROR_LINE_NUMBER_DOES_NOT_EXIST, String.valueOf(lineNumberToBeDeleted));
+				return false; 
+			}
+		}
+		return true;
 	}
 	
 	public static void sortCommand(){
@@ -387,8 +381,10 @@ class TextBuddy {
 		return string.length();
 	}
 	
-	public static String getLineRemoved(LinkedList<String> tempContents, int tempContentsIndexToRemove) {
-		return "deleted from " + fileName + ": " + String.valueOf(tempContents.remove(tempContentsIndexToRemove));
+	public static void deleteLineAndPrint(LinkedList<String> tempContents, String[] input) {
+		int tempContentsIndexToRemove = getIndexToRemove(input);
+		String lineContentToRemove = String.valueOf(tempContents.remove(tempContentsIndexToRemove));
+		promptToUser(MESSAGE_LINE_DELETED_FROM_FILE, fileName, lineContentToRemove);
 	}
 
 	public static int getLineNumberToDelete(String[] input) {
@@ -443,5 +439,24 @@ class TextBuddy {
 	private static void clearCommand() {
 		replaceOldOriginalFile();
 		promptToUser(MESSAGE_CLEAR_TEXT_MESSAGE, fileName);
+	}
+	
+	/*
+	 * These Functions are used as prompts to the user for several messages
+	 */
+	public static void promptToUser(String message) {
+		System.out.println(message);
+	}
+	
+	public static void promptToUser(String message, String name){
+		System.out.printf(message, name);
+	}
+	
+	public static void promptToUser(String message, int number, String name){
+		System.out.printf(message, number, name);
+	}
+	
+	public static void promptToUser(String message, String name1, String name2){
+		System.out.printf(message, name1, name2);
 	}
 }
