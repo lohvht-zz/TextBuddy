@@ -87,38 +87,38 @@ class TextBuddy {
 	/*
 	 * These methods are used as prompts to the user for several messages
 	 */
-	public static void promptToUser(String message) {
+	private static void promptToUser(String message) {
 		System.out.println(message);
 	}
 	
-	public static void promptToUser(String message, String name){
+	private static void promptToUser(String message, String name){
 		System.out.printf(message, name);
 	}
 	
-	public static void promptToUser(String message, int number, String name){
+	private static void promptToUser(String message, int number, String name){
 		System.out.printf(message, number, name);
 	}
 	
-	public static void promptToUser(String message, String name1, String name2){
+	private static void promptToUser(String message, String name1, String name2){
 		System.out.printf(message, name1, name2);
 	}
 	
 	/*
 	 * These are the following getter methods used in the whole code
 	 */
-	public static String[] getInputs(Scanner inputScanner) {
-		return inputScanner.nextLine().split(" ", 2);
+	public static String[] getInputs(String typedLine) {
+		return typedLine.split(" ", 2);
 	}
 
 	public static String getCommandString(String[] input) {
 		return input[0];
 	}
 	
-	public static int getIndexToRemove(String[] input) {
+	private static int getIndexToRemove(String[] input) {
 		return Integer.valueOf(getUserResponse(input)) - 1;
 	}
 	
-	public static ArrayList<Integer> getSearchedWordLineIndexes(LinkedList<String> tempContents, String wordToSearchFor){
+	private static ArrayList<Integer> getSearchedWordLineIndexes(LinkedList<String> tempContents, String wordToSearchFor){
 		ArrayList<Integer> indexesOfWordInstanceFound = new ArrayList<Integer>();
 		int listSize = getTotalNumberOfLines(tempContents);
 		
@@ -131,19 +131,19 @@ class TextBuddy {
 		return indexesOfWordInstanceFound;
 	}
 	
-	public static int getStringLength(String string) {
+	private static int getStringLength(String string) {
 		return string.length();
 	}
 	
-	public static int getLineNumberToDelete(String[] input) {
+	private static int getLineNumberToDelete(String[] input) {
 		return Integer.valueOf(getUserResponse(input));
 	}
 
-	public static int getTotalNumberOfLines(LinkedList<String> tempContents) {
+	private static int getTotalNumberOfLines(LinkedList<String> tempContents) {
 		return tempContents.size();
 	}
 
-	public static String getUserResponse(String[] input) {
+	private static String getUserResponse(String[] input) {
 		return input[1];
 	}
 	
@@ -213,6 +213,26 @@ class TextBuddy {
 		}
 	}
 	/*
+	 * This method is used for testing purposes. Its the looped portion of runTextBuddy() without the while loop
+	 */
+	public static void setFileName(String name){
+		if (name.indexOf(".") < 0) {
+			fileName = name + ".txt";
+		} else {
+			fileName = name;
+		}
+	}
+	
+	public static void executeAdd(String typedLine){
+		String[] input = getInputs(typedLine);
+		addCommand(input);
+	}
+
+	public static void executeClear(){
+		clearCommand();
+	}
+	
+	/*
 	 * Main method and rest of the code starts here
 	 */
 	public static void main(String args[]) throws IOException {
@@ -240,7 +260,8 @@ class TextBuddy {
 		promptToUser(MESSAGE_FILE_READY, fileName);
 		while (isRunning) {
 			promptToUser(MESSAGE_COMMAND_PROMPT);
-			String[] input = getInputs(inputScanner);
+			String typedLine = inputScanner.nextLine();
+			String[] input = getInputs(typedLine);
 			String command = getCommandString(input);
 
 			switch (command) {
@@ -334,7 +355,7 @@ class TextBuddy {
 		}
 	}
 
-	public static void printDisplayTextList(LinkedList<String> tempContents) {
+	private static void printDisplayTextList(LinkedList<String> tempContents) {
 		int counter = 1;
 		for (String lineContent : tempContents) {
 			promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
@@ -366,7 +387,7 @@ class TextBuddy {
 		}
 	}
 	
-	public static boolean isDeleteValid(LinkedList<String> tempContents, String[] input){
+	private static boolean isDeleteValid(LinkedList<String> tempContents, String[] input){
 		int totalNumberOfLines = getTotalNumberOfLines(tempContents);
 		int lineNumberToBeDeleted = getLineNumberToDelete(input);
 		if (totalNumberOfLines == 0) {
@@ -381,7 +402,7 @@ class TextBuddy {
 		return true;
 	}
 	
-	public static void deleteLineAndPrint(LinkedList<String> tempContents, String[] input) {
+	private static void deleteLineAndPrint(LinkedList<String> tempContents, String[] input) {
 		int tempContentsIndexToRemove = getIndexToRemove(input);
 		String lineContentToRemove = String.valueOf(tempContents.remove(tempContentsIndexToRemove));
 		promptToUser(MESSAGE_LINE_DELETED_FROM_FILE, fileName, lineContentToRemove);
@@ -396,7 +417,7 @@ class TextBuddy {
 		promptToUser(MESSAGE_CLEAR_TEXT_MESSAGE, fileName);
 	}
 	
-	public static void sortCommand(){
+	private static void sortCommand(){
 		try {
 			BufferedReader fileReader = createReader(fileName);
 			BufferedWriter tempFileWriter = createWriter(NAME_TEMP_FILE);
@@ -417,7 +438,7 @@ class TextBuddy {
 		}
 	}
 	
-	public static void searchCommand(String[] input){
+	private static void searchCommand(String[] input){
 		try {
 			BufferedReader fileReader = createReader(fileName);
 			LinkedList<String> tempContents = new LinkedList<String>();
@@ -442,7 +463,7 @@ class TextBuddy {
 		}
 	}
 	
-	public static boolean isContainSubstring(String sourceString, String substring) {
+	private static boolean isContainSubstring(String sourceString, String substring) {
 	    int substringLength = getStringLength(substring);
 	    
 	    if (substringLength == 0){
@@ -467,7 +488,7 @@ class TextBuddy {
 	    return false;
 	}
 	
-	public static void printSearchResults(LinkedList<String> tempContents, ArrayList<Integer> indexesOfWordInstanceFound){
+	private static void printSearchResults(LinkedList<String> tempContents, ArrayList<Integer> indexesOfWordInstanceFound){
 		for(int index : indexesOfWordInstanceFound){
 			int counter = 1+index;
 			String lineContent = tempContents.get(index);
