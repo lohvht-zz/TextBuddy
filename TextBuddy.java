@@ -69,7 +69,7 @@ class TextBuddy {
 	private static final String MESSAGE_LINE_PRINTED = "%1$d. %2$s\n";
 	private static final String MESSAGE_STRING_SUCCESSFULLY_ADDED = "added to %1$s: \"%2$s\"\n";
 	private static final String MESSAGE_TEXT_DOCUMENT_IS_EMPTY = "%1$s is empty\n";
-	private static final String MESSAGE_LINE_DELETED_FROM_FILE = "deleted from %1$s: %2$s\n";
+	private static final String MESSAGE_LINE_DELETED_FROM_FILE = "deleted from %1$s: \"%2$s\"\n";
 	//ERROR MESSAGES
 	private static final String ERROR_FILE_REPLACEMENT = "Something has gone wrong with file replacement";
 	private static final String ERROR_NO_FILE_STRING_DETECTED = "No file input stated, terminating program";
@@ -84,6 +84,137 @@ class TextBuddy {
 	private static Scanner inputScanner = new Scanner(System.in);
 	private static String fileName = null;
 	
+	/*
+	 * These methods are used as prompts to the user for several messages
+	 */
+	public static void promptToUser(String message) {
+		System.out.println(message);
+	}
+	
+	public static void promptToUser(String message, String name){
+		System.out.printf(message, name);
+	}
+	
+	public static void promptToUser(String message, int number, String name){
+		System.out.printf(message, number, name);
+	}
+	
+	public static void promptToUser(String message, String name1, String name2){
+		System.out.printf(message, name1, name2);
+	}
+	
+	/*
+	 * These are the following getter methods used in the whole code
+	 */
+	public static String[] getInputs(Scanner inputScanner) {
+		return inputScanner.nextLine().split(" ", 2);
+	}
+
+	public static String getCommandString(String[] input) {
+		return input[0];
+	}
+	
+	public static int getIndexToRemove(String[] input) {
+		return Integer.valueOf(getUserResponse(input)) - 1;
+	}
+	
+	public static ArrayList<Integer> getSearchedWordLineIndexes(LinkedList<String> tempContents, String wordToSearchFor){
+		ArrayList<Integer> indexesOfWordInstanceFound = new ArrayList<Integer>();
+		int listSize = getTotalNumberOfLines(tempContents);
+		
+		for(int i = 0; i < listSize; i++){
+			String lineString = tempContents.get(i);
+			if(isContainSubstring(lineString, wordToSearchFor)){
+				indexesOfWordInstanceFound.add(i);
+			}
+		}
+		return indexesOfWordInstanceFound;
+	}
+	
+	public static int getStringLength(String string) {
+		return string.length();
+	}
+	
+	public static int getLineNumberToDelete(String[] input) {
+		return Integer.valueOf(getUserResponse(input));
+	}
+
+	public static int getTotalNumberOfLines(LinkedList<String> tempContents) {
+		return tempContents.size();
+	}
+
+	public static String getUserResponse(String[] input) {
+		return input[1];
+	}
+	
+	/*
+	 * Methods for creation of Buffered writers and readers and Files
+	 */
+	private static File createFile(String fileName) {
+		File file = new File(fileName);
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return file;
+	}
+	
+	private static BufferedReader createReader(String fileName) throws FileNotFoundException {
+		File file = createFile(fileName);
+		FileInputStream fileIn = new FileInputStream(file);
+		InputStreamReader inputStreamReader = new InputStreamReader(fileIn, StandardCharsets.UTF_8);
+		BufferedReader reader = new BufferedReader(inputStreamReader);
+		return reader;
+	}
+
+	private static BufferedWriter createWriter(String fileName) throws FileNotFoundException {
+		File file = createFile(fileName);
+		FileOutputStream fileOut = new FileOutputStream(file);
+		OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOut, StandardCharsets.UTF_8);
+		BufferedWriter writer = new BufferedWriter(outputStreamWriter);
+		return writer;
+	}
+	
+	/*
+	 * These 3 methods are the mechanisms for saving the relevant text files
+	 */
+	private static void saveAndWriteToFile(LinkedList<String> tempContents, BufferedWriter tempFileWriter, 
+			BufferedReader fileReader) throws IOException {
+		saveChangeAndCloseStreams(tempContents, tempFileWriter, fileReader);
+		replaceOldOriginalFile();
+	}
+
+	private static void saveChangeAndCloseStreams(LinkedList<String> tempContents, BufferedWriter tempFileWriter, BufferedReader fileReader) {
+		try {
+			while (!tempContents.isEmpty()) {
+				tempFileWriter.write(tempContents.remove());
+				tempFileWriter.newLine();
+			}
+			tempFileWriter.close();
+			fileReader.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static void replaceOldOriginalFile(){
+		File file = createFile(fileName);
+		File tempFile = createFile(NAME_TEMP_FILE);
+
+		if (!file.delete()) {
+			promptToUser(ERROR_FILE_REPLACEMENT);
+			return;
+		}
+		if (!tempFile.renameTo(file)) {
+			promptToUser(ERROR_COULD_NOT_RENAME_FILE);
+		}
+	}
+	/*
+	 * Main method and rest of the code starts here
+	 */
 	public static void main(String args[]) throws IOException {
 		if (!isCommandLineValid(args)) {
 			promptToUser(ERROR_NO_FILE_STRING_DETECTED);
@@ -91,6 +222,18 @@ class TextBuddy {
 		}
 		fileName = formatFileName(args);
 		runTextBuddy();
+	}
+	
+	private static boolean isCommandLineValid(String[] args) {
+		return (!(args.length == 0));
+	}
+	
+	private static String formatFileName(String[] args) {
+		String text = getCommandString(args);
+		if (text.indexOf(".") < 0) {
+			text = text + ".txt";
+		}
+		return text;
 	}
 	
 	private static void runTextBuddy() throws IOException {
@@ -141,59 +284,12 @@ class TextBuddy {
 		inputScanner.close();
 	}
 
-	private static boolean isCommandLineValid(String[] args) {
-		return (!(args.length == 0));
-	}
-
-	private static String formatFileName(String[] args) {
-		String text = getCommandString(args);
-		if (text.indexOf(".") < 0) {
-			text = text + ".txt";
-		}
-		return text;
-	}
-	
-	private static File createFile(String fileName) {
-		File file = new File(fileName);
-		try {
-			file.createNewFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return file;
-	}
-
-	private static BufferedReader createReader(String fileName) throws FileNotFoundException {
-		File file = createFile(fileName);
-		FileInputStream fileIn = new FileInputStream(file);
-		InputStreamReader inputStreamReader = new InputStreamReader(fileIn, StandardCharsets.UTF_8);
-		BufferedReader reader = new BufferedReader(inputStreamReader);
-		return reader;
-	}
-
-	private static BufferedWriter createWriter(String fileName) throws FileNotFoundException {
-		File file = createFile(fileName);
-		FileOutputStream fileOut = new FileOutputStream(file);
-		OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOut, StandardCharsets.UTF_8);
-		BufferedWriter writer = new BufferedWriter(outputStreamWriter);
-		return writer;
-	}
-
 	private static void copyFileContentToTempContents(BufferedReader fileReader, LinkedList<String> tempContents) 
 			throws IOException {
 		String fileLineContent;
 		while ((fileLineContent = fileReader.readLine()) != null) {
 			tempContents.add(fileLineContent);
 		}
-	}
-
-	public static String[] getInputs(Scanner inputScanner) {
-		return inputScanner.nextLine().split(" ", 2);
-	}
-
-	public static String getCommandString(String[] input) {
-		return input[0];
 	}
 
 	private static void addCommand(String[] input) {
@@ -227,11 +323,7 @@ class TextBuddy {
 				promptToUser(MESSAGE_TEXT_DOCUMENT_IS_EMPTY, fileName);
 				return;
 			}
-			int counter = 1;
-			for (String lineContent : tempContents) {
-				promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
-				counter++;
-			}
+			printDisplayTextList(tempContents);
 			fileReader.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -239,6 +331,14 @@ class TextBuddy {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+
+	public static void printDisplayTextList(LinkedList<String> tempContents) {
+		int counter = 1;
+		for (String lineContent : tempContents) {
+			promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
+			counter++;
 		}
 	}
 
@@ -252,8 +352,8 @@ class TextBuddy {
 			if(!isDeleteValid(tempContents, input)){
 				return;
 			}
-			
 			deleteLineAndPrint(tempContents, input);
+			
 			saveAndWriteToFile(tempContents, tempFileWriter, fileReader);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -264,10 +364,6 @@ class TextBuddy {
 		} catch (NumberFormatException e) {
 			promptToUser(ERROR_DELETE_FORMAT_INCORRECT);
 		}
-	}
-
-	public static int getIndexToRemove(String[] input) {
-		return Integer.valueOf(getUserResponse(input)) - 1;
 	}
 	
 	public static boolean isDeleteValid(LinkedList<String> tempContents, String[] input){
@@ -283,6 +379,21 @@ class TextBuddy {
 			}
 		}
 		return true;
+	}
+	
+	public static void deleteLineAndPrint(LinkedList<String> tempContents, String[] input) {
+		int tempContentsIndexToRemove = getIndexToRemove(input);
+		String lineContentToRemove = String.valueOf(tempContents.remove(tempContentsIndexToRemove));
+		promptToUser(MESSAGE_LINE_DELETED_FROM_FILE, fileName, lineContentToRemove);
+	}
+	
+	private static void exitCommand() {
+		isRunning = !isRunning;
+	}
+
+	private static void clearCommand() {
+		replaceOldOriginalFile();
+		promptToUser(MESSAGE_CLEAR_TEXT_MESSAGE, fileName);
 	}
 	
 	public static void sortCommand(){
@@ -356,107 +467,11 @@ class TextBuddy {
 	    return false;
 	}
 	
-	public static ArrayList<Integer> getSearchedWordLineIndexes(LinkedList<String> tempContents, String wordToSearchFor){
-		ArrayList<Integer> indexesOfWordInstanceFound = new ArrayList<Integer>();
-		int listSize = getTotalNumberOfLines(tempContents);
-		
-		for(int i = 0; i < listSize; i++){
-			String lineString = tempContents.get(i);
-			if(isContainSubstring(lineString, wordToSearchFor)){
-				indexesOfWordInstanceFound.add(i);
-			}
-		}
-		return indexesOfWordInstanceFound;
-	}
-	
 	public static void printSearchResults(LinkedList<String> tempContents, ArrayList<Integer> indexesOfWordInstanceFound){
 		for(int index : indexesOfWordInstanceFound){
 			int counter = 1+index;
 			String lineContent = tempContents.get(index);
 			promptToUser(MESSAGE_LINE_PRINTED, counter, lineContent);
 		}
-	}
-	
-	public static int getStringLength(String string) {
-		return string.length();
-	}
-	
-	public static void deleteLineAndPrint(LinkedList<String> tempContents, String[] input) {
-		int tempContentsIndexToRemove = getIndexToRemove(input);
-		String lineContentToRemove = String.valueOf(tempContents.remove(tempContentsIndexToRemove));
-		promptToUser(MESSAGE_LINE_DELETED_FROM_FILE, fileName, lineContentToRemove);
-	}
-
-	public static int getLineNumberToDelete(String[] input) {
-		return Integer.valueOf(getUserResponse(input));
-	}
-
-	public static int getTotalNumberOfLines(LinkedList<String> tempContents) {
-		return tempContents.size();
-	}
-
-	public static String getUserResponse(String[] input) {
-		return input[1];
-	}
-
-	private static void exitCommand() {
-		isRunning = !isRunning;
-	}
-
-	private static void saveAndWriteToFile(LinkedList<String> tempContents, BufferedWriter tempFileWriter, 
-			BufferedReader fileReader) throws IOException {
-		saveChangeAndCloseStreams(tempContents, tempFileWriter, fileReader);
-		replaceOldOriginalFile();
-	}
-
-	private static void saveChangeAndCloseStreams(LinkedList<String> tempContents, BufferedWriter tempFileWriter, BufferedReader fileReader) {
-		try {
-			while (!tempContents.isEmpty()) {
-				tempFileWriter.write(tempContents.remove());
-				tempFileWriter.newLine();
-			}
-			tempFileWriter.close();
-			fileReader.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	private static void replaceOldOriginalFile(){
-		File file = createFile(fileName);
-		File tempFile = createFile(NAME_TEMP_FILE);
-
-		if (!file.delete()) {
-			promptToUser(ERROR_FILE_REPLACEMENT);
-			return;
-		}
-		if (!tempFile.renameTo(file)) {
-			promptToUser(ERROR_COULD_NOT_RENAME_FILE);
-		}
-	}
-
-	private static void clearCommand() {
-		replaceOldOriginalFile();
-		promptToUser(MESSAGE_CLEAR_TEXT_MESSAGE, fileName);
-	}
-	
-	/*
-	 * These Functions are used as prompts to the user for several messages
-	 */
-	public static void promptToUser(String message) {
-		System.out.println(message);
-	}
-	
-	public static void promptToUser(String message, String name){
-		System.out.printf(message, name);
-	}
-	
-	public static void promptToUser(String message, int number, String name){
-		System.out.printf(message, number, name);
-	}
-	
-	public static void promptToUser(String message, String name1, String name2){
-		System.out.printf(message, name1, name2);
 	}
 }
