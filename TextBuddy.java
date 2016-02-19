@@ -85,7 +85,8 @@ class TextBuddy {
 	private static String fileName = null;
 	
 	/*
-	 * These methods are used as prompts to the user for several messages
+	 * These methods are used as prompts to the user for several messages and errors as stated
+	 * at the start of the TextBuddy class
 	 */
 	private static void promptToUser(String message) {
 		System.out.println(message);
@@ -213,7 +214,7 @@ class TextBuddy {
 		}
 	}
 	/*
-	 * This method is used for testing purposes. Its the looped portion of runTextBuddy() without the while loop
+	 * These methods is used for testing purposes only, the access for them are deliberately set to public
 	 */
 	public static void setFileName(String name){
 		if (name.indexOf(".") < 0) {
